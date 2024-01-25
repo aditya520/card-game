@@ -21,6 +21,7 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface ExPopulusCardsInterface extends ethers.utils.Interface {
   functions: {
+    "abilityPriority(uint8)": FunctionFragment;
     "approveAddressForLookup(address)": FunctionFragment;
     "approvedAddressesForLookup(address)": FunctionFragment;
     "balanceOf(address,uint256)": FunctionFragment;
@@ -35,11 +36,16 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
     "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
+    "setPriority(uint8,uint8)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "uri(uint256)": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "abilityPriority",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "approveAddressForLookup",
     values: [string]
@@ -88,6 +94,10 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
     values: [string, boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "setPriority",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
   ): string;
@@ -97,6 +107,10 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "uri", values: [BigNumberish]): string;
 
+  decodeFunctionResult(
+    functionFragment: "abilityPriority",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "approveAddressForLookup",
     data: BytesLike
@@ -136,6 +150,10 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setApprovalForAll",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setPriority",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -243,6 +261,11 @@ export class ExPopulusCards extends BaseContract {
   interface: ExPopulusCardsInterface;
 
   functions: {
+    abilityPriority(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
+
     approveAddressForLookup(
       _to: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -333,6 +356,12 @@ export class ExPopulusCards extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setPriority(
+      _ability: BigNumberish,
+      _priority: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
@@ -345,6 +374,11 @@ export class ExPopulusCards extends BaseContract {
 
     uri(arg0: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
   };
+
+  abilityPriority(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<number>;
 
   approveAddressForLookup(
     _to: string,
@@ -436,6 +470,12 @@ export class ExPopulusCards extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setPriority(
+    _ability: BigNumberish,
+    _priority: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   supportsInterface(
     interfaceId: BytesLike,
     overrides?: CallOverrides
@@ -449,6 +489,11 @@ export class ExPopulusCards extends BaseContract {
   uri(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
+    abilityPriority(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<number>;
+
     approveAddressForLookup(
       _to: string,
       overrides?: CallOverrides
@@ -534,6 +579,12 @@ export class ExPopulusCards extends BaseContract {
     setApprovalForAll(
       operator: string,
       approved: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setPriority(
+      _ability: BigNumberish,
+      _priority: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -665,6 +716,11 @@ export class ExPopulusCards extends BaseContract {
   };
 
   estimateGas: {
+    abilityPriority(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     approveAddressForLookup(
       _to: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -740,6 +796,12 @@ export class ExPopulusCards extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setPriority(
+      _ability: BigNumberish,
+      _priority: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     supportsInterface(
       interfaceId: BytesLike,
       overrides?: CallOverrides
@@ -754,6 +816,11 @@ export class ExPopulusCards extends BaseContract {
   };
 
   populateTransaction: {
+    abilityPriority(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     approveAddressForLookup(
       _to: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -829,6 +896,12 @@ export class ExPopulusCards extends BaseContract {
     setApprovalForAll(
       operator: string,
       approved: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setPriority(
+      _ability: BigNumberish,
+      _priority: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
