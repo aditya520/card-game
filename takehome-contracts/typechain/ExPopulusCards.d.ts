@@ -22,7 +22,6 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 interface ExPopulusCardsInterface extends ethers.utils.Interface {
   functions: {
     "abilityPriority(uint8)": FunctionFragment;
-    "approveAddressForLookup(address)": FunctionFragment;
     "approvedAddressesForLookup(address)": FunctionFragment;
     "balanceOf(address,uint256)": FunctionFragment;
     "balanceOfBatch(address[],uint256[])": FunctionFragment;
@@ -45,10 +44,6 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "abilityPriority",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "approveAddressForLookup",
-    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "approvedAddressesForLookup",
@@ -109,10 +104,6 @@ interface ExPopulusCardsInterface extends ethers.utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "abilityPriority",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "approveAddressForLookup",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -266,11 +257,6 @@ export class ExPopulusCards extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[number]>;
 
-    approveAddressForLookup(
-      _to: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     approvedAddressesForLookup(
       arg0: string,
       overrides?: CallOverrides
@@ -380,11 +366,6 @@ export class ExPopulusCards extends BaseContract {
     overrides?: CallOverrides
   ): Promise<number>;
 
-  approveAddressForLookup(
-    _to: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   approvedAddressesForLookup(
     arg0: string,
     overrides?: CallOverrides
@@ -493,11 +474,6 @@ export class ExPopulusCards extends BaseContract {
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<number>;
-
-    approveAddressForLookup(
-      _to: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     approvedAddressesForLookup(
       arg0: string,
@@ -721,11 +697,6 @@ export class ExPopulusCards extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    approveAddressForLookup(
-      _to: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     approvedAddressesForLookup(
       arg0: string,
       overrides?: CallOverrides
@@ -819,11 +790,6 @@ export class ExPopulusCards extends BaseContract {
     abilityPriority(
       arg0: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    approveAddressForLookup(
-      _to: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     approvedAddressesForLookup(

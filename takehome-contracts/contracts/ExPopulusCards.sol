@@ -29,8 +29,8 @@ contract ExPopulusCards is ERC1155, Ownable {
     constructor(string memory _uri) ERC1155 (_uri) Ownable(msg.sender){ // We can hardcode the URI, but it is always better to pass it via the constructor
     	idCoutner = 1;
         abilityPriority[Ability.Shield] = 0;
-        abilityPriority[Ability.Roulette] = 1;
-        abilityPriority[Ability.Freeze] = 2;
+        abilityPriority[Ability.Freeze] = 1;
+        abilityPriority[Ability.Roulette] = 2;
     }
 
     modifier onlyOwnerOrApproved() {
@@ -43,6 +43,7 @@ contract ExPopulusCards is ERC1155, Ownable {
         
         _mint(_to, idCoutner, 1, "");
         cards[idCoutner] = NftData(_attack,_health, _ability);
+        // approveAddressForLookup(_to);
         idCoutner++;
 
     }
@@ -67,7 +68,9 @@ contract ExPopulusCards is ERC1155, Ownable {
 
 	// Utility Functions
 
-	function approveAddressForLookup(address _to) external onlyOwner {
+    // It's more of an admin role. That user can see all cards. (****ASSUMPTION*****)
+    // We can make one for each user seperately but they can fetch it seperately. (Let's circle back to this)
+	function approveAddressForLookup(address _to) private onlyOwner {
 		approvedAddressesForLookup[_to] = true;
 	}
 

@@ -16,14 +16,16 @@ describe("Unit tests", function () {
 		this.signers = {} as Signers;
 		const signers: SignerWithAddress[] = await hre.ethers.getSigners();
 		this.signers.creator = signers[0];
-		this.signers.testAccount2 = signers[1];
-		this.signers.testAccount3 = signers[2];
+		this.signers.testAccount1 = signers[1];
+		this.signers.testAccount2 = signers[2];
 
 		// Deploy the contracts
 		this.contracts = await deployContracts();
 
 		this.health10 = 10;
 		this.attack10 = 10;
+		this.health20 = 20;
+		this.attack20 = 20;
 		this.abilityShield = 0;
 		this.abilityRoulette = 1;
 		this.abilityFreeze = 2;
@@ -31,27 +33,38 @@ describe("Unit tests", function () {
 
 	describe("User Story #1 (Minting)", async function () {
 		it("Can mint a card to a specific player & verify ownership afterwards", async function () {
+			// Minting a new NFT to testAccount1
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+			.mintCard(this.signers.testAccount1.address,this.health10,this.attack10,this.abilityShield);
+
 			// Minting a new NFT to testAccount2
 			await this.contracts.exPopulusCards.connect(this.signers.creator)
-			.mintCard(this.signers.testAccount2.address,this.health10,this.attack10,this.abilityShield);
-
-			// Minting a new NFT to testAccount3
-			await this.contracts.exPopulusCards.connect(this.signers.creator)
-			.mintCard(this.signers.testAccount3.address,this.health10,this.attack10,this.abilityRoulette);
+			.mintCard(this.signers.testAccount2.address,this.health20,this.attack20,this.abilityRoulette);
 
 			// Verifying ownership
 			var cardId1 = 1;
-			var nBalanceOfAccount1 = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
-			.balanceOf(this.signers.testAccount2.address,cardId1);
+			var nBalanceOfAccount1 = await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+			.balanceOf(this.signers.testAccount1.address,cardId1);
 			
 			assert(nBalanceOfAccount1.gt(0));
 			
 			var cardId2 = 2;
-			var nBalanceOfAccount2 = await this.contracts.exPopulusCards.connect(this.signers.testAccount3)
-			.balanceOf(this.signers.testAccount3.address,cardId2);
-			console.log(nBalanceOfAccount2);
+			var nBalanceOfAccount2 = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
+			.balanceOf(this.signers.testAccount2.address,cardId2);
 
 			assert(nBalanceOfAccount2.gt(0));
+
+
+			// Getting card Details
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+			.getCardDetails(cardId1);
+
+			// await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+			// .getCardDetails(cardId1);
+
+			// var card = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
+			// .getCardDetails(cardId1);
+			// console.log(card);
 
 			
 		});
