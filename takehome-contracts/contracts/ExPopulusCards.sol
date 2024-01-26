@@ -15,7 +15,7 @@ contract ExPopulusCards is ERC1155, Ownable {
 
     struct NftData {
         uint8 attack;
-        uint8 health;
+        int8 health;
         Ability ability;
     }
 
@@ -38,7 +38,7 @@ contract ExPopulusCards is ERC1155, Ownable {
         _;
     }
 
-    function mintCard(address _to, uint8 _attack, uint8 _health, Ability _ability) external onlyOwner {
+    function mintCard(address _to, uint8 _attack, int8 _health, Ability _ability) external onlyOwner {
         require(uint8(_ability) < 3, "ExPopulusCards: Only Ability 0, 1 and 2 allowed.");
         
         _mint(_to, idCoutner, 1, "");
@@ -48,14 +48,14 @@ contract ExPopulusCards is ERC1155, Ownable {
 
     }
 
-    function getCardDetails(uint256 _cardId) external view onlyOwnerOrApproved returns(uint8 attack, uint8 health, Ability ability){
+    function getCardDetails(uint256 _cardId) external view onlyOwnerOrApproved returns(uint8 attack, int8 health, Ability ability){
         NftData storage card = cards[_cardId];
         return (card.attack, card.health, card.ability);
     }
 
 
 
-
+// You won't be able to change the priority as checkPriority will never work. Fix this.
     function setPriority(Ability _ability, uint8 _priority) external onlyOwner {
         require(_priority < 3, "ExPopulusCards: Only Priority 0, 1 and 2 allowed.");
         require(!checkPriority(_priority), "ExPopulusCards: Priority already assigned.");
