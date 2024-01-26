@@ -8,3 +8,5 @@ meta/**/wallet.json
 meta/**/wallet-final.json
 meta/**/config.json
 tcg_portal/public/build
+takehome-contracts/artifacts
+takehome-contracts/typechain

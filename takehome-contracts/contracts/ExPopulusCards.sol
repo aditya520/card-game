@@ -60,8 +60,6 @@ contract ExPopulusCards is ERC1155, Ownable {
         require(_priority < 3, "ExPopulusCards: Only Priority 0, 1 and 2 allowed.");
         require(!checkPriority(_priority), "ExPopulusCards: Priority already assigned.");
         abilityPriority[_ability] = _priority;
-
-        
     }
 
 

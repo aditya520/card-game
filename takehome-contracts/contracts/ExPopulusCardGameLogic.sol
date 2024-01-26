@@ -6,25 +6,64 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
 
+    struct NftCardStatus {
+        uint8 attack;
+        int8 health;
+        Ability ability;
+        bool abilityUsed;
+        bool alive;
+    }
+
     // mapping(uint256 => [])
     constructor() {}
 
-    function battle(uint256[] memory _playerCardIds) external returns (uint256 battleId) {
+    function battle(
+        uint256[] memory _playerCardIds
+    ) external returns (uint256 battleId) {
         require(
             _playerCardIds.length <= 3 && _playerCardIds.length > 0,
             "ExPopulusCardGameLogic: You should send minimum 1 and maximum 3 cards."
         );
 
-        // Checking if owner owns those cards
+        NftCardStatus[] memory playerCards = new NftCardStatus[](
+            _playerCardIds.length
+        );
+
+        // Checking if owner owns those cards and append the cards to the new array
         for (uint256 i = 0; i < _playerCardIds.length; i++) {
             require(
                 balanceOf(msg.sender, _playerCardIds[i]) == 1,
                 "ExPopulusCardGameLogic: You don't own the cards that you provided."
             );
+            NftData memory c = cards[_playerCardIds[i]];
+            playerCards[i] = NftCardStatus(
+                c.attack,
+                c.health,
+                c.ability,
+                false,
+                true
+            );
         }
 
         // Let's pick three random cards from the deck.
-        uint256[] memory enemyDeck = generateEnemyDeck(_playerCardIds.length);
+        uint256[] memory enemyCardsIds = generateEnemyDeck(
+            _playerCardIds.length
+        );
+
+        NftCardStatus[] memory enemyCards = new NftCardStatus[](
+            enemyCardsIds.length
+        );
+
+        for (uint256 i = 0; i < enemyCardsIds.length; i++) {
+            NftData memory e = cards[enemyCardsIds[i]];
+            enemyCards[i] = NftCardStatus(
+                e.attack,
+                e.health,
+                e.ability,
+                false,
+                true
+            );
+        }
 
         // Game Status
         // 1 -> In Progress
@@ -37,14 +76,12 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
         uint256 enemyIndex = 0;
 
         uint256 nPlayerCards = _playerCardIds.length;
-        uint256 nEnemyCards = enemyDeck.length;
-
+        uint256 nEnemyCards = enemyCardsIds.length;
 
         // Game Loop
         // Basic Attack
         // Death Handling
         while (status == 1) {
-
             if (nPlayerCards == 0 && nEnemyCards == 0) {
                 status = 2;
                 break;
@@ -57,46 +94,47 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                 status = 4;
                 break;
             }
-            
-            NftData memory playerCard = cards[_playerCardIds[playerIndex % _playerCardIds.length]];
-            if (playerCard.health < 1) {
-                playerIndex++;
-                nPlayerCards--;
-                continue;
-            }
-            NftData memory enemyCard = cards[enemyDeck[enemyIndex % enemyDeck.length]];
-             if (enemyCard.health < 1) {
-                enemyIndex++;
-                nEnemyCards--;
-                continue;
-            }
+
+            NftCardStatus memory currentPlayerCard = playerCards[playerIndex];
+            NftCardStatus memory currentEnemyCard = playerCards[enemyIndex];
 
             // Abilities (This will happen only on first Iteration)
+
             
-
-            // Fetch The abilities and Priorities
-            require(
-                abilityPriority[playerCard.ability] >= 0 &&
-                    abilityPriority[playerCard.ability] < 3,
-                "ExPopulusCardGameLogic: Priority not set for the cards"
-            );
-            require(
-                abilityPriority[enemyCard.ability] >= 0 &&
-                    abilityPriority[enemyCard.ability] < 3,
-                "ExPopulusCardGameLogic: Priority not set for the cards"
-            );
-
-            uint8 playerCardAbilityPriority = abilityPriority[
-                playerCard.ability
-            ];
-            uint8 enemyCardAbilityPriority = abilityPriority[enemyCard.ability];
-
-            NftData memory firstCard = playerCard;
-            NftData memory secondCard = enemyCard;
-            if (playerCardAbilityPriority < enemyCardAbilityPriority) {
-                firstCard = enemyCard;
-                secondCard = playerCard;
+            // Checking Player Ability
+            if (currentPlayerCard.abilityUsed == false) {
+                require(
+                    abilityPriority[currentPlayerCard.ability] >= 0 &&
+                        abilityPriority[currentPlayerCard.ability] < 3,
+                    "ExPopulusCardGameLogic: Priority not set for the cards"
+                );
+                // Add here
             }
+
+            // Checking enemy ability
+            if (currentEnemyCard.abilityUsed == false) {
+                require(
+                    abilityPriority[currentEnemyCard.ability] >= 0 &&
+                        abilityPriority[currentEnemyCard.ability] < 3,
+                    "ExPopulusCardGameLogic: Priority not set for the cards"
+                );
+
+                // Add here
+            }
+
+
+
+            // uint8 playerCardAbilityPriority = abilityPriority[
+            //     playerCard.ability
+            // ];
+            // uint8 enemyCardAbilityPriority = abilityPriority[enemyCard.ability];
+
+            // NftData memory firstCard = playerCard;
+            // NftData memory secondCard = enemyCard;
+            // if (playerCardAbilityPriority < enemyCardAbilityPriority) {
+            //     firstCard = enemyCard;
+            //     secondCard = playerCard;
+            // }
         }
 
         return 0;
@@ -149,7 +187,7 @@ for Roulette = getRandomNumber % 10 == 1; Return
     function attack(
         NftData memory _attacker,
         NftData memory _receiver
-    ) internal pure returns (uint8 receiversHealth) {
+    ) internal pure returns (int8 receiversHealth) {
         return _receiver.health - _attacker.health;
     }
 
