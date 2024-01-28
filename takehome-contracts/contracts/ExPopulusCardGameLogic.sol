@@ -6,6 +6,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
 
+
     struct NftCardStatus {
         uint8 attack;
         int8 health;
@@ -17,6 +18,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     // mapping(uint256 => [])
     constructor() {}
 
+    // We can use Enumerable Sets to see duplicates in the ID cards. (TODO:)
     function battle(
         uint256[] memory _playerCardIds
     ) external returns (uint256 battleId) {
@@ -103,6 +105,9 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
             bool playerAbility = false;
             bool enemyAbility = false;
 
+            int8 playerAbilityPriority = -1;
+            int8 enemyAbilityPriority = -1;
+
             // Checking Player Ability
             if (currentPlayerCard.abilityUsed == false) {
                 require(
@@ -112,6 +117,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                 );
                 // Add further logic here
                 playerAbility = true;
+                playerAbilityPriority = int8(abilityPriority[currentPlayerCard.ability]);
             }
 
             // Checking enemy ability
@@ -124,12 +130,18 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
         
                 // Add futher logic here
                 enemyAbility = true;
+                enemyAbilityPriority = int8(abilityPriority[currentEnemyCard.ability]);
             }
 
             // To Check if we have to use abilities or not.
-            if (playerAbility || enemyAbility) {
+            if (playerAbilityPriority > -1 || enemyAbilityPriority > -1) {
+                if (playerAbilityPriority >= enemyAbilityPriority) {            // Player Ability will be played first.
+                    if (currentPlayerCard.ability == 0) {                   // Player have Shield
 
+                    }
+                }       
             }
+
 
         }
 
@@ -148,18 +160,26 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 
 	Shield > Freeze > Rou
 	player 				enemy
-1.  Sh					Sh			DO Nothing
-2. 	Sh					Freeze		Player will attack enemy
-3. Freeze				Sh				Enemy will attack Player
-4. Freeze				Freeze		Player will attack enemy
+1.  Sh					Sh			Null
+2. 	Sh					Freeze		P -> E
+3. Sh                   Roulette    P -> E   &  R(E)
+4. Sh                   Nothing     P -> E
 
-	Freeze > Sheid > R
 
-1. Sh					Sh  			Do Nothing
-2. Sh					Freeze			Enemy will attack Player
-3. Freeze				Sh				Player will attack enemy
-4. Freeze				Freeze			Player will attack enemy
+5. Freeze				Sh			E -> P
+6. Freeze				Freeze		P -> E
+7. Freeze               Roulette    P -> E
+8. Freeze               Nothing     P -> E
 
+9. Roulette             Shield      E -> P   &  R(P)
+10. Roulette            Freeze      E -> P
+11. Roulette            Roulette    R(P)     &  R(E)
+12. Roulette            Noting      R(P)     &  E <-> P
+
+13. Nothing             Sh          E -> P
+14. Nothing             Freeze      E -> P
+15. Nothing             Roulette    R(E)     &  E <-> P
+16. Nothing             Nothing     E <-> P
 
 for Roulette = getRandomNumber % 10 == 1; Return
 

@@ -79,15 +79,15 @@ describe("Unit tests", function () {
 			var priority2 = await this.contracts.exPopulusCards.abilityPriority(0);
 			assert(priority2 == 2);
 
-			var priority0 = await this.contracts.exPopulusCards.abilityPriority(2);
-			assert(priority0 == 0);
+			var priority1 = await this.contracts.exPopulusCards.abilityPriority(2);
+			assert(priority1 == 1);
 
 			await this.contracts.exPopulusCards.connect(this.signers.creator).setPriority(0,0);
 
 			var priority2 = await this.contracts.exPopulusCards.abilityPriority(0);
 			assert(priority2 == 0);
 
-			var priority0 = await this.contracts.exPopulusCards.abilityPriority(2);
+			var priority0 = await this.contracts.exPopulusCards.abilityPriority(1);
 			assert(priority0 == 2);
 		})
 	});

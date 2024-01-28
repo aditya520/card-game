@@ -9,8 +9,9 @@ contract ExPopulusCards is ERC1155, Ownable {
     
 
     // We can use a map for abilities as it gives us an option to include more abilities in later game.
-    enum Ability {
-        Shield, Freeze, Roulette
+    // TODO: Add a null ability(Good Practice)
+    enum Ability  {
+        Shield, Roulette, Freeze
     }
 
     struct NftData {
