@@ -15,6 +15,10 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
         bool alive;
     }
 
+    enum Action {
+        None, Ability, Attack
+    }
+
     // mapping(uint256 => [])
     constructor() {}
 
@@ -99,6 +103,14 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 
             NftCardStatus memory currentPlayerCard = playerCards[playerIndex];
             NftCardStatus memory currentEnemyCard = playerCards[enemyIndex];
+            if (!currentPlayerCard.alive){
+                playerIndex++;
+                continue;
+            }
+            if (!currentEnemyCard.alive) {
+                enemyIndex++;
+                continue;
+            }
 
             // Abilities (This will happen only on first Iteration)
 
@@ -133,11 +145,30 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                 enemyAbilityPriority = int8(abilityPriority[currentEnemyCard.ability]);
             }
 
+
+
+
             // To Check if we have to use abilities or not.
             if (playerAbilityPriority > -1 || enemyAbilityPriority > -1) {
-                if (playerAbilityPriority >= enemyAbilityPriority) {            // Player Ability will be played first.
-                    if (currentPlayerCard.ability == 0) {                   // Player have Shield
-
+                if (playerAbilityPriority >= enemyAbilityPriority) {                        // Player Ability will be played first.
+                    currentPlayerCard.abilityUsed = true;
+                    if (currentPlayerCard.ability == Ability.Shield) {                      // Player have Shield
+                        if(enemyAbilityPriority > - 1) {                                    // Enemy have some Ability.
+                            currentEnemyCard.abilityUsed = true;
+                            if (currentEnemyCard.ability == Ability.Shield) {               // Do Nothing and continue
+                                continue;
+                            }
+                            if (currentEnemyCard.ability == Ability.Roulette) {             // Execute Roulette
+                                if (roulette() == true) {                                   // Finish the GAME
+                                    status = 4;                                             // Enemy won
+                                }
+                            }
+                            currentEnemyCard.health = attack(currentPlayerCard, currentEnemyCard);
+                            if (currentEnemyCard.health <= 0) {
+                                currentEnemyCard.alive = false;
+                                nEnemyCards--;
+                            }
+                        }
                     }
                 }       
             }
@@ -159,11 +190,11 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 	userdFreezedEnemy: bool
 
 	Shield > Freeze > Rou
-	player 				enemy
-1.  Sh					Sh			Null
-2. 	Sh					Freeze		P -> E
-3. Sh                   Roulette    P -> E   &  R(E)
-4. Sh                   Nothing     P -> E
+	player 				enemy                                          Ability Performed                Attack  
+1.  Sh					Sh			Null                            P(Shield),  E(Shield)               Nil
+2. 	Sh					Freeze		P -> E                          P(Shiled)                           P -> E
+3. Sh                   Roulette     R(E)  & P -> E                 P(Shiled), E(Rouletter)             P -> E
+4. Sh                   Nothing     P -> E                          P(Shiled)
 
 
 5. Freeze				Sh			E -> P
@@ -171,7 +202,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 7. Freeze               Roulette    P -> E
 8. Freeze               Nothing     P -> E
 
-9. Roulette             Shield      E -> P   &  R(P)
+9. Roulette             Shield     R(P) &  E -> P   
 10. Roulette            Freeze      E -> P
 11. Roulette            Roulette    R(P)     &  R(E)
 12. Roulette            Noting      R(P)     &  E <-> P
@@ -201,8 +232,8 @@ for Roulette = getRandomNumber % 10 == 1; Return
 
     // Helper Functions
     function attack(
-        NftData memory _attacker,
-        NftData memory _receiver
+        NftCardStatus memory _attacker,
+        NftCardStatus memory _receiver
     ) internal pure returns (int8 receiversHealth) {
         return _receiver.health - _attacker.health;
     }
@@ -217,5 +248,13 @@ for Roulette = getRandomNumber % 10 == 1; Return
         }
 
         return enemyDeck;
+    }
+
+    function roulette() internal view returns(bool) {
+        if (uint256(block.prevrendao) % 10 == 0) {
+            return true;
+        }
+
+        return false;
     }
 }
