@@ -29,6 +29,8 @@ describe("Unit tests", function () {
 		this.abilityShield = 0;
 		this.abilityRoulette = 1;
 		this.abilityFreeze = 2;
+		this.card1 = 1;
+		this.card2 = 2;
 	});
 
 	describe("User Story #1 (Minting)", async function () {
@@ -42,35 +44,52 @@ describe("Unit tests", function () {
 			.mintCard(this.signers.testAccount2.address,this.health20,this.attack20,this.abilityRoulette);
 
 			// Verifying ownership
-			var cardId1 = 1;
 			var nBalanceOfAccount1 = await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
-			.balanceOf(this.signers.testAccount1.address,cardId1);
+			.balanceOf(this.signers.testAccount1.address,this.card1);
 			
 			assert(nBalanceOfAccount1.gt(0));
-			
-			var cardId2 = 2;
+
 			var nBalanceOfAccount2 = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
-			.balanceOf(this.signers.testAccount2.address,cardId2);
+			.balanceOf(this.signers.testAccount2.address,this.card2);
+
+			assert(nBalanceOfAccount2.gt(0));
+		});
+
+		it("Contract Owner can allow an address to mint cards", async function () {
+		
+			await this.contracts.exPopulusCards.connect(this.signers.creator).approveAddressForMinting(this.signers.testAccount1.address);
+
+			await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+			.mintCard(this.signers.testAccount2.address,this.health20,this.attack20,this.abilityRoulette);
+		
+			var nBalanceOfAccount2 = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
+			.balanceOf(this.signers.testAccount2.address,this.card2);
 
 			assert(nBalanceOfAccount2.gt(0));
 
-
-			// Getting card Details
-			await this.contracts.exPopulusCards.connect(this.signers.creator)
-			.getCardDetails(cardId1);
-
-			// await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
-			// .getCardDetails(cardId1);
-
-			// var card = await this.contracts.exPopulusCards.connect(this.signers.testAccount2)
-			// .getCardDetails(cardId1);
-			// console.log(card);
-
+			await expect(this.contracts.exPopulusCards.connect(this.signers.testAccount2)
+			.mintCard(this.signers.testAccount2.address,this.health20,this.attack20,this.abilityRoulette)).to.be.reverted;
 			
 		});
+
 	});
 
 	describe("User Story #2 (Ability Configuration)", async function () {
+		it("Setting Priority and swapping them", async function() {
+			var priority2 = await this.contracts.exPopulusCards.abilityPriority(0);
+			assert(priority2 == 2);
+
+			var priority0 = await this.contracts.exPopulusCards.abilityPriority(2);
+			assert(priority0 == 0);
+
+			await this.contracts.exPopulusCards.connect(this.signers.creator).setPriority(0,0);
+
+			var priority2 = await this.contracts.exPopulusCards.abilityPriority(0);
+			assert(priority2 == 0);
+
+			var priority0 = await this.contracts.exPopulusCards.abilityPriority(2);
+			assert(priority0 == 2);
+		})
 	});
 
 	describe("User Story #3 (Battles & Game Loop)", async function () {

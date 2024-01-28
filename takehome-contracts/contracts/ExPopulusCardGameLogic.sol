@@ -100,7 +100,9 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 
             // Abilities (This will happen only on first Iteration)
 
-            
+            bool playerAbility = false;
+            bool enemyAbility = false;
+
             // Checking Player Ability
             if (currentPlayerCard.abilityUsed == false) {
                 require(
@@ -108,7 +110,8 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                         abilityPriority[currentPlayerCard.ability] < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
-                // Add here
+                // Add further logic here
+                playerAbility = true;
             }
 
             // Checking enemy ability
@@ -118,23 +121,16 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                         abilityPriority[currentEnemyCard.ability] < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
-
-                // Add here
+        
+                // Add futher logic here
+                enemyAbility = true;
             }
 
+            // To Check if we have to use abilities or not.
+            if (playerAbility || enemyAbility) {
 
+            }
 
-            // uint8 playerCardAbilityPriority = abilityPriority[
-            //     playerCard.ability
-            // ];
-            // uint8 enemyCardAbilityPriority = abilityPriority[enemyCard.ability];
-
-            // NftData memory firstCard = playerCard;
-            // NftData memory secondCard = enemyCard;
-            // if (playerCardAbilityPriority < enemyCardAbilityPriority) {
-            //     firstCard = enemyCard;
-            //     secondCard = playerCard;
-            // }
         }
 
         return 0;
