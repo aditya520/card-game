@@ -5,6 +5,7 @@ import "./ExPopulusCards.sol";
 contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
+    uint256 battleId;
 
     struct NftCardStatus {
         uint8 attack;
@@ -24,7 +25,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     constructor() {}
 
     // We can use Enumerable Sets to see duplicates in the ID cards. (TODO:)
-    function battle(uint256[] memory _playerCardIds) external returns (uint256 battleId) {
+    function battle(uint256[] memory _playerCardIds) external returns (uint256) {
         require(
             _playerCardIds.length <= 3 && _playerCardIds.length > 0,
             "ExPopulusCardGameLogic: You should send minimum 1 and maximum 3 cards."
@@ -291,59 +292,18 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
             }
         }
 
-        return 0;
+        if (status != 3) {
+            winningStreak[msg.sender]++;
+        } else {
+            winningStreak[msg.sender] = 0;
+        }
+
+        battleId++;
+        userBattles[msg.sender].push(battleId);
+
+        return battleId;
     }
 
-    /*
-
-    // To see if they have played ability do (index <  length(cards)); it mean they have not used the ability
-
-    userShieldPlayer: bool
-    userShieldEnemy: bool
-
-    usedFreezedPlayer: bool
-    userdFreezedEnemy: bool
-
-    Shield > Freeze > Rou
-    player 				enemy                                          Ability Performed                Attack  
-    1.  Sh					Sh			Null                            P(Shield),  E(Shield)               Nil
-    2. 	Sh					Freeze		P -> E                          P(Shiled)                           P -> E
-    3. Sh                   Roulette     R(E)  & P -> E                 P(Shiled), E(Rouletter)             P -> E
-    4. Sh                   Nothing     P -> E                          P(Shiled)
-
-
-    5. Freeze				Sh			E -> P
-    6. Freeze				Freeze		P -> E
-    7. Freeze               Roulette    P -> E
-    8. Freeze               Nothing     P -> E
-
-    9. Roulette             Shield     R(P) &  E -> P   
-    10. Roulette            Freeze      E -> P
-    11. Roulette            Roulette    R(P)     &  R(E)
-    12. Roulette            Noting      R(P)     &  E <-> P
-
-    13. Nothing             Sh          E -> P
-    14. Nothing             Freeze      E -> P
-    15. Nothing             Roulette    R(E)     &  E <-> P
-    16. Nothing             Nothing     E <-> P
-
-    for Roulette = getRandomNumber % 10 == 1; Return
-
-
-    while game.status == Inprogress {
-    playerFrontIndex , EnemyFrontIndex := 0 / length(cards),0
-    // Clone the cards everytime,
-
-    1. Figure out the priority.
-    2. Check if the health !=0
-    3. If it same, then give user the first preference
-    4. 
-    5. 
-    }
-
-    function attack(card1, card2) returns (card1, card2)
-
-    */
 
     // Helper Functions
 
