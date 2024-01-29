@@ -6,7 +6,6 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
 
-
     struct NftCardStatus {
         uint8 attack;
         int8 health;
@@ -16,7 +15,9 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     }
 
     enum Action {
-        None, Ability, Attack
+        None,
+        Ability,
+        Attack
     }
 
     // mapping(uint256 => [])
@@ -103,7 +104,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 
             NftCardStatus memory currentPlayerCard = playerCards[playerIndex];
             NftCardStatus memory currentEnemyCard = playerCards[enemyIndex];
-            if (!currentPlayerCard.alive){
+            if (!currentPlayerCard.alive) {
                 playerIndex++;
                 continue;
             }
@@ -129,7 +130,9 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                 );
                 // Add further logic here
                 playerAbility = true;
-                playerAbilityPriority = int8(abilityPriority[currentPlayerCard.ability]);
+                playerAbilityPriority = int8(
+                    abilityPriority[currentPlayerCard.ability]
+                );
             }
 
             // Checking enemy ability
@@ -139,41 +142,54 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
                         abilityPriority[currentEnemyCard.ability] < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
-        
+
                 // Add futher logic here
                 enemyAbility = true;
-                enemyAbilityPriority = int8(abilityPriority[currentEnemyCard.ability]);
+                enemyAbilityPriority = int8(
+                    abilityPriority[currentEnemyCard.ability]
+                );
             }
-
-
-
 
             // To Check if we have to use abilities or not.
             if (playerAbilityPriority > -1 || enemyAbilityPriority > -1) {
-                if (playerAbilityPriority >= enemyAbilityPriority) {                        // Player Ability will be played first.
+                // Player Ability will be played first.
+                if (playerAbilityPriority >= enemyAbilityPriority) {
                     currentPlayerCard.abilityUsed = true;
-                    if (currentPlayerCard.ability == Ability.Shield) {                      // Player have Shield
-                        if(enemyAbilityPriority > - 1) {                                    // Enemy have some Ability.
+
+                    // Player have Shield
+                    if (currentPlayerCard.ability == Ability.Shield) {
+                        // Enemy have some Ability.
+                        if (enemyAbilityPriority > -1) {
                             currentEnemyCard.abilityUsed = true;
-                            if (currentEnemyCard.ability == Ability.Shield) {               // Do Nothing and continue
+
+                            // Do Nothing and continue
+                            if (currentEnemyCard.ability == Ability.Shield) {
                                 continue;
                             }
-                            if (currentEnemyCard.ability == Ability.Roulette) {             // Execute Roulette
-                                if (roulette() == true) {                                   // Finish the GAME
-                                    status = 4;                                             // Enemy won
+
+                            // Execute Roulette
+                            if (currentEnemyCard.ability == Ability.Roulette) {
+                                if (roulette() == true) {
+                                    // Finish the GAME
+                                    status = 4; // Enemy won
+                                    break;
                                 }
                             }
-                            currentEnemyCard.health = attack(currentPlayerCard, currentEnemyCard);
-                            if (currentEnemyCard.health <= 0) {
-                                currentEnemyCard.alive = false;
-                                nEnemyCards--;
-                            }
                         }
+
+                        currentEnemyCard.health = attack(
+                            currentPlayerCard,
+                            currentEnemyCard
+                        );
+                        if (currentEnemyCard.health <= 0) {
+                            currentEnemyCard.alive = false;
+                            nEnemyCards--;
+                        }
+                    } else if (currentPlayerCard.ability == Ability.Freeze) {
+                        
                     }
-                }       
+                }
             }
-
-
         }
 
         return 0;
@@ -250,7 +266,7 @@ for Roulette = getRandomNumber % 10 == 1; Return
         return enemyDeck;
     }
 
-    function roulette() internal view returns(bool) {
+    function roulette() internal view returns (bool) {
         if (uint256(block.prevrendao) % 10 == 0) {
             return true;
         }
