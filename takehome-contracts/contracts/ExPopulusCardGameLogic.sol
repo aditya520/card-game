@@ -1,8 +1,9 @@
 pragma solidity ^0.8.12;
 
 import "./ExPopulusCards.sol";
+import "./ExPopulusToken.sol";
 
-contract ExPopulusCardGameLogic is ExPopulusCards("random") {
+contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
     uint256 battleId;
@@ -22,7 +23,10 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
     }
 
     // mapping(uint256 => [])
-    constructor() {}
+    constructor() ExPopulusToken() ExPopulusCards("random")
+    {
+
+    }
 
     // We can use Enumerable Sets to see duplicates in the ID cards. (TODO:)
     function battle(uint256[] memory _playerCardIds) external returns (uint256) {
@@ -294,6 +298,11 @@ contract ExPopulusCardGameLogic is ExPopulusCards("random") {
 
         if (status != 3) {
             winningStreak[msg.sender]++;
+            if (winningStreak[msg.sender] % 5 == 0) {
+                // Mint 1000 tokens
+            } else {
+                // Mint 100 tokens
+            }
         } else {
             winningStreak[msg.sender] = 0;
         }
