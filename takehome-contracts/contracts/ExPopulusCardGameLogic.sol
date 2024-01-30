@@ -5,9 +5,10 @@ import "./ExPopulusCards.sol";
 import "./ExPopulusToken.sol";
 import "hardhat/console.sol";
 
-contract ExPopulusCardGameLogic is ExPopulusToken{
+contract ExPopulusCardGameLogic is ExPopulusToken {
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
+    mapping(uint256 => bytes[]) public battleHistory;
     uint256 battleId;
 
     struct NftCardStatus {
@@ -18,17 +19,19 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
         bool alive;
     }
 
-    // enum Action {
-    //     None,
-    //     Ability,
-    //     Attack
-    // }
+    struct ActionEvent {
+        uint256 cardId;
+        bool abilityPlayed;
+        ExPopulusCards.Ability ability;
+        bool player;
+        bool attack;
+        uint256 TargetCardId;
+    }
 
     ExPopulusCards exPopulusCards;
 
     // mapping(uint256 => [])
-    constructor(address _exPopulusCards) ExPopulusToken()
-    {
+    constructor(address _exPopulusCards) ExPopulusToken() {
         exPopulusCards = ExPopulusCards(_exPopulusCards);
     }
 
@@ -56,8 +59,8 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
         // Let's pick three random cards from the deck.
         uint256[] memory enemyCardsIds = generateEnemyDeck(_playerCardIds.length);
-        for(uint8 i = 0; i < enemyCardsIds.length; i++) {
-            console.log("Enemy Id is:" ,enemyCardsIds[i]);
+        for (uint8 i = 0; i < enemyCardsIds.length; i++) {
+            console.log("Enemy Id is:", enemyCardsIds[i]);
         }
 
         NftCardStatus[] memory enemyCards = new NftCardStatus[](
@@ -114,11 +117,14 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
             int8 playerAbilityPriority = -1;
             int8 enemyAbilityPriority = -1;
 
+            uint256 playerCardId = playerIndex % _playerCardIds.length;
+            uint256 enemyCardId = enemyIndex % enemyCardsIds.length;
 
             // Checking Player Ability
             if (currentPlayerCard.abilityUsed == false) {
                 require(
-                    exPopulusCards.abilityPriority(currentPlayerCard.ability) >= 0 && exPopulusCards.abilityPriority(currentPlayerCard.ability) < 3,
+                    exPopulusCards.abilityPriority(currentPlayerCard.ability) >= 0
+                        && exPopulusCards.abilityPriority(currentPlayerCard.ability) < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
                 // Add further logic here
@@ -128,23 +134,25 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
             // Checking enemy ability
             if (currentEnemyCard.abilityUsed == false) {
                 require(
-                    exPopulusCards.abilityPriority(currentEnemyCard.ability) >= 0 && exPopulusCards.abilityPriority(currentEnemyCard.ability) < 3,
+                    exPopulusCards.abilityPriority(currentEnemyCard.ability) >= 0
+                        && exPopulusCards.abilityPriority(currentEnemyCard.ability) < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
 
                 // Add futher logic here
                 enemyAbilityPriority = int8(exPopulusCards.abilityPriority(currentEnemyCard.ability));
             }
-            console.log("playerIndex",playerIndex,"enemyIndex",enemyIndex);
+            battleId++;
             if (playerAbilityPriority > -1 || enemyAbilityPriority > -1) {
-                
                 if (playerAbilityPriority > -1) {
                     // Player Has some Ability. Let's see all the conditions
                     currentPlayerCard.abilityUsed = true;
-
+                    // Player' ability Will be played
+                    battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, true, currentPlayerCard.ability,true, false, 0)));
+                    
+                    
                     // If enemy doesn't have ability
                     if (enemyAbilityPriority < 0) {
-                        // TODO: Add player's ability to the array for history (It could be any 3)
                         if (currentPlayerCard.ability == ExPopulusCards.Ability.Roulette) {
                             // Player will play roulette
                             if (roulette()) {
@@ -153,18 +161,23 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
                             }
                             // Enemy will attack the player
                             currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+
+                            // Storing it to the array (TODO: We can add this to attack function only.)
+                            battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                         }
 
                         // Player will attack enemy (This will happen irrespective of player's ability)
                         currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                        battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                     } else {
                         // Enemy have some Ability.
                         // Now we have the check the priority as well.
                         currentEnemyCard.abilityUsed = true;
+                        // Enemy's ability Will be played
+                        battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, true, currentEnemyCard.ability,false, false, 0)));
 
                         if (currentPlayerCard.ability == ExPopulusCards.Ability.Shield) {
                             if (currentEnemyCard.ability == ExPopulusCards.Ability.Shield) {
-                                // TODO: Record it
                                 // Do Nothing and Continue
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (roulette()) {
@@ -174,6 +187,7 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
                                 }
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 // Now we check the priorities.
                                 if (playerAbilityPriority > enemyAbilityPriority) {
@@ -181,10 +195,12 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                                     // Player will attack the enemy
                                     currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                    battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                                 } else {
                                     // Freeze > Shield
                                     // Enemy will attack the player
                                     currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                                    battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                                 }
                             }
                         } else if (currentPlayerCard.ability == ExPopulusCards.Ability.Freeze) {
@@ -193,14 +209,17 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
                                     // Freeze > Shield
                                     // Player will attack the enemy
                                     currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                    battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                                 } else {
                                     // Shield > Freeze
                                     // Enemy will attack the player
                                     currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                                    battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                                 }
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (enemyAbilityPriority > playerAbilityPriority) {
                                     if (roulette()) {
@@ -212,6 +231,7 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
                             }
                         } else if (currentPlayerCard.ability == ExPopulusCards.Ability.Roulette) {
                             // TODO: This part can be optimized
@@ -224,6 +244,7 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 if (playerAbilityPriority > enemyAbilityPriority) {
                                     // Roulette > Freeze
@@ -235,6 +256,7 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
                                 }
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                             } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (roulette()) {
                                     // player will play roulette
@@ -249,9 +271,11 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
 
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                                battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                             }
                         }
                     }
@@ -260,6 +284,7 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                     // It means Enemy will have the ability since it is going on under the condition.
                     currentEnemyCard.abilityUsed = true;
+                    battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, true, currentEnemyCard.ability,false, false, 0)));
 
                     // TODO: Record it under the history array
                     if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
@@ -271,23 +296,24 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
 
                         // Player will attack the enemy
                         currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
-                     }
+                        battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
+                    }
 
                     // Enemy will attack the player
                     currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
+                    battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
                 }
             } else {
                 // No Abilities found. Just attack each other please.
 
                 // Player will attack the enemy
                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
+                battleHistory[battleId].push(abi.encode(ActionEvent(playerCardId, false, currentPlayerCard.ability,false, true, enemyCardId)));
 
                 // Enemy will attack the player
                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
-
+                battleHistory[battleId].push(abi.encode(ActionEvent(enemyCardId, false, currentPlayerCard.ability,false, true, playerCardId)));
             }
-           
-
 
             // Now all abilities and attacks have happened. Let's see if the card survives or not.
             if (currentPlayerCard.health <= 0) {
@@ -307,20 +333,20 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
             winningStreak[msg.sender]++;
             if (winningStreak[msg.sender] % 5 == 0) {
                 // Mint 1000 tokens
+                _mintToken(msg.sender, 1000);
             } else {
                 // Mint 100 tokens
+                _mintToken(msg.sender, 100);
             }
         } else {
             winningStreak[msg.sender] = 0;
         }
 
-        battleId++;
         userBattles[msg.sender].push(battleId);
-        console.log("Status: ",status);
+        console.log("Status: ", status);
 
         return battleId;
     }
-
 
     // Helper Functions
 
@@ -328,6 +354,14 @@ contract ExPopulusCardGameLogic is ExPopulusToken{
     function attack(uint8 _attackersAttack, int8 _receiverHealth) internal pure returns (int8 receiversHealth) {
         return _receiverHealth - int8(_attackersAttack);
     }
+
+
+    function fetchBattleHistory(uint256 _battleId) public view returns (ActionEvent[] memory events) {
+        for (uint256 i = 0; i < battleHistory[_battleId].length; i++) {
+            events[i] = abi.decode(battleHistory[_battleId][i],(ActionEvent));
+        }
+
+     }
 
     // Assumption: Random cards can be user cards as well.
     function generateEnemyDeck(uint256 _size) internal view returns (uint256[] memory) {

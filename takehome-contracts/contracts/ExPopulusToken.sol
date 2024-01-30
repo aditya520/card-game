@@ -13,7 +13,7 @@ contract ExPopulusToken is ERC20{
 	}
 
 // TODO: Add access control
-	function mintToken(address _to, uint256 _amount) external {
+	function _mintToken(address _to, uint256 _amount) internal {
 		require(msg.sender == gameContract, "ExPopulusToken: Sorry you can't mint the token.");
 		_mint(_to, _amount);
 	}
