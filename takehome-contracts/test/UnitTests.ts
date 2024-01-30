@@ -93,6 +93,47 @@ describe("Unit tests", function () {
 	});
 
 	describe("User Story #3 (Battles & Game Loop)", async function () {
+			it.only("Battle Testing", async function () {
+			// Let's mint 4 nfts.
+
+			
+
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+				.mintCard(this.signers.testAccount1.address, this.health10, this.attack10, this.abilityShield);
+
+				console.log(await this.contracts.exPopulusCards.cards(1));
+				console.log(await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+					.balanceOf(this.signers.testAccount1.address,1))
+
+
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+				.mintCard(this.signers.testAccount1.address, this.health20, this.attack20, this.abilityRoulette);
+
+				console.log(await this.contracts.exPopulusCards.cards(2));
+				console.log(await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+					.balanceOf(this.signers.testAccount1.address,2))
+
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+				.mintCard(this.signers.testAccount1.address, this.health10, this.attack10, this.abilityFreeze);
+
+				console.log(await this.contracts.exPopulusCards.cards(3));
+				console.log(await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+					.balanceOf(this.signers.testAccount1.address,3))
+
+			await this.contracts.exPopulusCards.connect(this.signers.creator)
+				.mintCard(this.signers.testAccount1.address, this.health10, this.attack10, this.abilityShield);
+
+				console.log(await this.contracts.exPopulusCards.cards(4));
+				console.log(await this.contracts.exPopulusCards.connect(this.signers.testAccount1)
+					.balanceOf(this.signers.testAccount1.address,4))
+
+			console.log(this.signers.testAccount1.address);
+
+			// Call Battle Function
+
+			await this.contracts.exPopulusCardGameLogic.connect(this.signers.testAccount1)
+				.battle([1, 2, 3]);
+		})
 	});
 
 	describe("User Story #4 (Fungible Token & Battle Rewards)", async function () {

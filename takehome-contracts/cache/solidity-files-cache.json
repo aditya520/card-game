@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/aditya/Downloads/assignment/takehome-contracts/contracts/ExPopulusCardGameLogic.sol": {
-      "lastModificationDate": 1706502967663,
-      "contentHash": "f4fa67672b4a42fa102bb0f910b981bb",
+      "lastModificationDate": 1706576131790,
+      "contentHash": "f5468d7fee1c6dc4201cd65e81c5c8d9",
       "sourceName": "contracts/ExPopulusCardGameLogic.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -31,7 +31,8 @@
       },
       "imports": [
         "./ExPopulusCards.sol",
-        "./ExPopulusToken.sol"
+        "./ExPopulusToken.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         "^0.8.12"
@@ -41,8 +42,8 @@
       ]
     },
     "/Users/aditya/Downloads/assignment/takehome-contracts/contracts/ExPopulusCards.sol": {
-      "lastModificationDate": 1706463543792,
-      "contentHash": "eac6980dc2f9a2e088e6006346dba3f0",
+      "lastModificationDate": 1706576184658,
+      "contentHash": "05ffbf5574b273a1a03444e9053f678f",
       "sourceName": "contracts/ExPopulusCards.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -80,8 +81,8 @@
       ]
     },
     "/Users/aditya/Downloads/assignment/takehome-contracts/contracts/ExPopulusToken.sol": {
-      "lastModificationDate": 1706502830735,
-      "contentHash": "601ef0455ac7ce4be566e021bfd1fd42",
+      "lastModificationDate": 1706563643352,
+      "contentHash": "bef9f1729dce65fe10e067cb7d90facc",
       "sourceName": "contracts/ExPopulusToken.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -685,6 +686,42 @@
       ],
       "artifacts": [
         "IERC20Metadata"
+      ]
+    },
+    "/Users/aditya/Downloads/assignment/node_modules/.pnpm/hardhat@2.19.4_ts-node@10.4.0_typescript@4.4.4/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1706158624457,
+      "contentHash": "896f68942c3a20e9ae3c3c5bfd3add54",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
       ]
     }
   }

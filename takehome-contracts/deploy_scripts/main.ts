@@ -3,27 +3,27 @@ import {ethers} from "hardhat";
 import {ExPopulusCardGameLogic, ExPopulusCards, ExPopulusToken} from "../typechain";
 
 export interface IDeployContractsOutput {
-	// exPopulusToken: ExPopulusToken;
+	exPopulusToken: ExPopulusToken;
 	exPopulusCards: ExPopulusCards;
-	// exPopulusCardGameLogic: ExPopulusCardGameLogic;
+	exPopulusCardGameLogic: ExPopulusCardGameLogic;
 }
 
 export async function deployContracts(): Promise<IDeployContractsOutput> {
 
 	const creator = (await ethers.getSigners())[0];
 
-	// const exPopulusTokenContract = await ethers.deployContract("ExPopulusToken", creator);
-	// await exPopulusTokenContract.deployed();
+	const exPopulusTokenContract = await ethers.deployContract("ExPopulusToken", creator);
+	await exPopulusTokenContract.deployed();
 
 	const exPopulusCardsContract = await ethers.deployContract("ExPopulusCards",["TestURI"], creator);
 	await exPopulusCardsContract.deployed();
 
-	// const exPopulusCardGameLogicContract = await ethers.deployContract("ExPopulusCardGameLogic", creator);
-	// await exPopulusCardGameLogicContract.deployed();
+	const exPopulusCardGameLogicContract = await ethers.deployContract("ExPopulusCardGameLogic", [exPopulusCardsContract.address],creator);
+	await exPopulusCardGameLogicContract.deployed();
 
 	return {
-		// exPopulusToken: exPopulusTokenContract as ExPopulusToken,
+		exPopulusToken: exPopulusTokenContract as ExPopulusToken,
 		exPopulusCards: exPopulusCardsContract as ExPopulusCards,
-		// exPopulusCardGameLogic: exPopulusCardGameLogicContract as ExPopulusCardGameLogic,
+		exPopulusCardGameLogic: exPopulusCardGameLogicContract as ExPopulusCardGameLogic,
 	};
 }

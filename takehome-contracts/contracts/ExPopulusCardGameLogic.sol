@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
 import "./ExPopulusCards.sol";
 import "./ExPopulusToken.sol";
+import "hardhat/console.sol";
 
-contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
+contract ExPopulusCardGameLogic is ExPopulusToken{
     mapping(address => uint8) public winningStreak;
     mapping(address => uint256[]) public userBattles;
     uint256 battleId;
@@ -11,23 +13,26 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
     struct NftCardStatus {
         uint8 attack;
         int8 health;
-        Ability ability;
+        ExPopulusCards.Ability ability;
         bool abilityUsed;
         bool alive;
     }
 
-    enum Action {
-        None,
-        Ability,
-        Attack
-    }
+    // enum Action {
+    //     None,
+    //     Ability,
+    //     Attack
+    // }
+
+    ExPopulusCards exPopulusCards;
 
     // mapping(uint256 => [])
-    constructor() ExPopulusToken() ExPopulusCards("random")
+    constructor(address _exPopulusCards) ExPopulusToken()
     {
-
+        exPopulusCards = ExPopulusCards(_exPopulusCards);
     }
 
+    // TODO: add battleEnemy Function (uint256[] memory _playerCardIds, uint256[] memory _enemyCardIds)
     // We can use Enumerable Sets to see duplicates in the ID cards. (TODO:)
     function battle(uint256[] memory _playerCardIds) external returns (uint256) {
         require(
@@ -42,23 +47,26 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
         // Checking if owner owns those cards and append the cards to the new array
         for (uint256 i = 0; i < _playerCardIds.length; i++) {
             require(
-                balanceOf(msg.sender, _playerCardIds[i]) == 1,
+                exPopulusCards.balanceOf(msg.sender, _playerCardIds[i]) > 0,
                 "ExPopulusCardGameLogic: You don't own the cards that you provided."
             );
-            NftData memory c = cards[_playerCardIds[i]];
-            playerCards[i] = NftCardStatus(c.attack, c.health, c.ability, false, true);
+            (uint8 playerAttack, int8 health, ExPopulusCards.Ability ability) = exPopulusCards.cards(_playerCardIds[i]);
+            playerCards[i] = NftCardStatus(playerAttack, health, ability, false, true);
         }
 
         // Let's pick three random cards from the deck.
         uint256[] memory enemyCardsIds = generateEnemyDeck(_playerCardIds.length);
+        for(uint8 i = 0; i < enemyCardsIds.length; i++) {
+            console.log("Enemy Id is:" ,enemyCardsIds[i]);
+        }
 
         NftCardStatus[] memory enemyCards = new NftCardStatus[](
             enemyCardsIds.length
         );
 
         for (uint256 i = 0; i < enemyCardsIds.length; i++) {
-            NftData memory e = cards[enemyCardsIds[i]];
-            enemyCards[i] = NftCardStatus(e.attack, e.health, e.ability, false, true);
+            (uint8 enemyAttack, int8 health, ExPopulusCards.Ability ability) = exPopulusCards.cards(enemyCardsIds[i]);
+            enemyCards[i] = NftCardStatus(enemyAttack, health, ability, false, true);
         }
 
         // Game Status
@@ -91,8 +99,8 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                 break;
             }
 
-            NftCardStatus memory currentPlayerCard = playerCards[playerIndex];
-            NftCardStatus memory currentEnemyCard = playerCards[enemyIndex];
+            NftCardStatus memory currentPlayerCard = playerCards[playerIndex % _playerCardIds.length];
+            NftCardStatus memory currentEnemyCard = enemyCards[enemyIndex % enemyCardsIds.length];
             if (!currentPlayerCard.alive) {
                 playerIndex++;
                 continue;
@@ -106,28 +114,30 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
             int8 playerAbilityPriority = -1;
             int8 enemyAbilityPriority = -1;
 
+
             // Checking Player Ability
             if (currentPlayerCard.abilityUsed == false) {
                 require(
-                    abilityPriority[currentPlayerCard.ability] >= 0 && abilityPriority[currentPlayerCard.ability] < 3,
+                    exPopulusCards.abilityPriority(currentPlayerCard.ability) >= 0 && exPopulusCards.abilityPriority(currentPlayerCard.ability) < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
                 // Add further logic here
-                playerAbilityPriority = int8(abilityPriority[currentPlayerCard.ability]);
+                playerAbilityPriority = int8(exPopulusCards.abilityPriority(currentPlayerCard.ability));
             }
 
             // Checking enemy ability
             if (currentEnemyCard.abilityUsed == false) {
                 require(
-                    abilityPriority[currentEnemyCard.ability] >= 0 && abilityPriority[currentEnemyCard.ability] < 3,
+                    exPopulusCards.abilityPriority(currentEnemyCard.ability) >= 0 && exPopulusCards.abilityPriority(currentEnemyCard.ability) < 3,
                     "ExPopulusCardGameLogic: Priority not set for the cards"
                 );
 
                 // Add futher logic here
-                enemyAbilityPriority = int8(abilityPriority[currentEnemyCard.ability]);
+                enemyAbilityPriority = int8(exPopulusCards.abilityPriority(currentEnemyCard.ability));
             }
-
+            console.log("playerIndex",playerIndex,"enemyIndex",enemyIndex);
             if (playerAbilityPriority > -1 || enemyAbilityPriority > -1) {
+                
                 if (playerAbilityPriority > -1) {
                     // Player Has some Ability. Let's see all the conditions
                     currentPlayerCard.abilityUsed = true;
@@ -135,7 +145,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                     // If enemy doesn't have ability
                     if (enemyAbilityPriority < 0) {
                         // TODO: Add player's ability to the array for history (It could be any 3)
-                        if (currentPlayerCard.ability == Ability.Roulette) {
+                        if (currentPlayerCard.ability == ExPopulusCards.Ability.Roulette) {
                             // Player will play roulette
                             if (roulette()) {
                                 status = 3;
@@ -152,11 +162,11 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                         // Now we have the check the priority as well.
                         currentEnemyCard.abilityUsed = true;
 
-                        if (currentPlayerCard.ability == Ability.Shield) {
-                            if (currentEnemyCard.ability == Ability.Shield) {
+                        if (currentPlayerCard.ability == ExPopulusCards.Ability.Shield) {
+                            if (currentEnemyCard.ability == ExPopulusCards.Ability.Shield) {
                                 // TODO: Record it
                                 // Do Nothing and Continue
-                            } else if (currentEnemyCard.ability == Ability.Roulette) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (roulette()) {
                                     // Enemy will play roulette
                                     status = 4;
@@ -164,7 +174,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                 }
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
-                            } else if (currentEnemyCard.ability == Ability.Freeze) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 // Now we check the priorities.
                                 if (playerAbilityPriority > enemyAbilityPriority) {
                                     // Shield > Freeze
@@ -177,10 +187,8 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                     currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
                                 }
                             }
-                            // Player Shield Completed (TODO: Don't continue here. We have to check the health at the end.)
-                            continue;
-                        } else if (currentPlayerCard.ability == Ability.Freeze) {
-                            if (currentEnemyCard.ability == Ability.Shield) {
+                        } else if (currentPlayerCard.ability == ExPopulusCards.Ability.Freeze) {
+                            if (currentEnemyCard.ability == ExPopulusCards.Ability.Shield) {
                                 if (playerAbilityPriority > enemyAbilityPriority) {
                                     // Freeze > Shield
                                     // Player will attack the enemy
@@ -190,10 +198,10 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                     // Enemy will attack the player
                                     currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
                                 }
-                            } else if (currentEnemyCard.ability == Ability.Freeze) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
-                            } else if (currentEnemyCard.ability == Ability.Roulette) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (enemyAbilityPriority > playerAbilityPriority) {
                                     if (roulette()) {
                                         // Enemy will play roulette
@@ -205,11 +213,9 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                 // Player will attack the enemy
                                 currentEnemyCard.health = attack(currentPlayerCard.attack, currentEnemyCard.health);
                             }
-                            // Player Freeze completed(TODO: Remove the continue Please Adi)
-                            continue;
-                        } else if (currentPlayerCard.ability == Ability.Roulette) {
+                        } else if (currentPlayerCard.ability == ExPopulusCards.Ability.Roulette) {
                             // TODO: This part can be optimized
-                            if (currentEnemyCard.ability == Ability.Shield) {
+                            if (currentEnemyCard.ability == ExPopulusCards.Ability.Shield) {
                                 if (roulette()) {
                                     // Player will play roulette
                                     status = 3;
@@ -218,7 +224,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
 
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
-                            } else if (currentEnemyCard.ability == Ability.Freeze) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Freeze) {
                                 if (playerAbilityPriority > enemyAbilityPriority) {
                                     // Roulette > Freeze
                                     if (roulette()) {
@@ -229,7 +235,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                 }
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
-                            } else if (currentEnemyCard.ability == Ability.Roulette) {
+                            } else if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                                 if (roulette()) {
                                     // player will play roulette
                                     status = 3;
@@ -247,9 +253,6 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                                 // Enemy will attack the player
                                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
                             }
-
-                            // Player Roulette is completed(TODO: Remove the continue again.)
-                            continue;
                         }
                     }
                 } else {
@@ -259,7 +262,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                     currentEnemyCard.abilityUsed = true;
 
                     // TODO: Record it under the history array
-                    if (currentEnemyCard.ability == Ability.Roulette) {
+                    if (currentEnemyCard.ability == ExPopulusCards.Ability.Roulette) {
                         if (roulette()) {
                             // Enemy will play roulette
                             status = 4;
@@ -283,6 +286,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                 currentPlayerCard.health = attack(currentEnemyCard.attack, currentPlayerCard.health);
 
             }
+           
 
 
             // Now all abilities and attacks have happened. Let's see if the card survives or not.
@@ -294,9 +298,12 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
                 currentEnemyCard.alive = false;
                 nEnemyCards--;
             }
+
+            playerIndex++;
+            enemyIndex++;
         }
 
-        if (status != 3) {
+        if (status == 3) {
             winningStreak[msg.sender]++;
             if (winningStreak[msg.sender] % 5 == 0) {
                 // Mint 1000 tokens
@@ -309,6 +316,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
 
         battleId++;
         userBattles[msg.sender].push(battleId);
+        console.log("Status: ",status);
 
         return battleId;
     }
@@ -325,7 +333,7 @@ contract ExPopulusCardGameLogic is ExPopulusCards, ExPopulusToken  {
     function generateEnemyDeck(uint256 _size) internal view returns (uint256[] memory) {
         uint256[] memory enemyDeck = new uint256[](_size);
         for (uint256 i = 0; i < _size; i++) {
-            enemyDeck[i] = uint256(block.prevrandao) % idCoutner; // Not using ChainLink VRF function to save time for now
+            enemyDeck[i] = uint256(block.prevrandao) % exPopulusCards.idCounter(); // Not using ChainLink VRF function to save time for now
         }
 
         return enemyDeck;

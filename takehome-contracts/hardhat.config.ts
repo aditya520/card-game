@@ -24,6 +24,10 @@ export const config: HardhatUserConfig & any = {
       accounts,
       chainId: 43114,
       blockGasLimit: 30000000,
+    },
+    tenderly: {
+      chainId: 1,
+      url: "https://rpc.tenderly.co/fork/f107af13-8e33-4e22-be19-219f7aa62753",
     }
   },
   paths: {
